@@ -66,7 +66,7 @@ This device is designed for **patients who require continuous or frequent cardia
 ### Step-by-Step Instructions
 
 1. **Create a Wi-Fi hotspot** (recommended: use your phone’s mobile hotspot).  
-   The ESP32 has to be configured to automatically join this network (SSID and password to be set in the ESP32 firmware — see `src/ESP 32/README.md` for details).
+   The ESP32 has to be configured to automatically join this network (SSID and password to be set in the ESP32 firmware — see `src/esp32_bridge/README.md` for details).
 
 2. **Connect your laptop** to the **same hotspot/network**.
 
@@ -79,7 +79,7 @@ This device is designed for **patients who require continuous or frequent cardia
 4. Start the Desktop GUI (this is the main interface):
 
    ```bash
-   cd "src/Display & Webserver"
+   cd "src/host_app"
    python display.py
    ```
 
@@ -104,7 +104,7 @@ This device is designed for **patients who require continuous or frequent cardia
 
 ### (Optional) Phone Dashboard
 
-In a second terminal (still inside the `src/Display & Webserver` folder):
+In a second terminal (still inside the `src/host_app` folder):
 
 ```bash
 python webserver.py
@@ -154,7 +154,7 @@ All waveforms and vitals are now mirrored on your phone.
 |---|---|
 | No waveforms appear | Ensure device is powered ON, electrodes are attached firmly, and you clicked “Connect UDP Listener”. Check that laptop and ESP32 are on the same Wi-Fi network. |
 | Battery status shows 0 % | Charge the device for at least 30 minutes. |
-| ESP32 not connecting | Restart the device and the hotspot. Verify SSID/password in ESP32 firmware (see `src/ESP 32/README (1).md`). |
+| ESP32 not connecting | Restart the device and the hotspot. Verify SSID/password in ESP32 firmware (see `src/esp32_bridge/README.md`). |
 | GUI shows “---/---” for BP | Wait a few seconds after connection — the model needs valid PTT values first. |
 | Dashboard stays OFFLINE | Make sure both `display.py` and `webserver.py` are running from the same folder. |
 | Poor signal quality | Re-apply electrodes or move away from phone chargers/motors. |

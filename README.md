@@ -1,101 +1,88 @@
-<!-- Do Not Change the below line. It will affect your workflow badge -->
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/9lqHKop1)
+# IM-PULSE — Cuffless Blood Pressure & Cardiac Monitor
 
-![Docs Added](https://github.com/edl-iitb/edl-26-project-submission-edl26_mon04/actions/workflows/classroom.yml/badge.svg)
+**🏆 Top-10 finalist, EDL 2026, IIT Bombay**
 
-<!-- ADD YOUR CHANGES AFTER THIS LINE -->
+<p align="center">
+  <img src="others/images/Final_product.jpeg" alt="IM-PULSE device with electrodes" width="620">
+</p>
 
-# IM-PULSE
+IM-PULSE is a compact, portable biomedical monitor built in the Electronic Device Lab (EDL) course at IIT Bombay. It acquires ECG and two arterial pulse waveforms (APW, from bioimpedance/IPG) through six electrodes on the chest and foot. It detects ECG R-peaks and APW feet on board, measures **pulse transit time (PTT)** and **pulse wave velocity** (4–10 m/s), and estimates **blood pressure without a cuff** using an XGBoost model. Data streams wirelessly to a laptop, which shows a live PyQt6 dashboard and serves the vitals to any browser through a Flask web server.
 
-## Team Information
-**Team name:** IM-PULSE (Group MON-04)
+The aim is a convenient alternative to bulky inflatable-cuff BP monitors and conventional ECG / Bio-Z instruments, for frequent cardiac monitoring where such equipment is unavailable or unaffordable.
 
-**Team members:**
-- Yashvardhan Khandegar — 23B1227
-- Sudhindra Sahoo — 23B1312
-- Jahnvi Sharma — 23B1926
-- Vinay Hariharan — 23B1310
-- Krunal Vaghela — 23B1262
+## System Overview
 
-## Project Abstract
-IM-PULSE is a compact, portable biomedical monitoring device developed in the Electronic Device Lab (EDL) course at IIT Bombay. The system simultaneously acquires ECG and dual Arterial Pulse Waveforms (APW) from bioimpedance (IPG) measurements using six electrodes (chest + foot + abdomen reference). It performs onboard ECG R-peak detection and APW foot detection on an STM32F411 Black Pill, computes Pulse Transit Time (PTT), derives Pulse Wave Velocity (4–10 m/s), and estimates cuffless blood pressure via a pre-trained XGBoost model. Data is wirelessly streamed through an ESP32 bridge to a host laptop, where a PyQt6 desktop GUI provides live plotting and a Flask web dashboard delivers real-time vitals to any device with access to the internet.
+```
+ 6 electrodes (chest, foot, abdomen ref.)
+        │
+ 2 × MAX30001 AFE  ── ECG + BioZ @ 128 Hz ──┐
+                                            ▼  SPI
+ INA219 power monitor ── I2C ──►  STM32F411 Black Pill
+                                   • Pan-Tompkins R-peak detection (ECG)
+                                   • APW foot detection (proximal: ECG-triggered cubic fit,
+                                     distal: morphological V-shape detector)
+                                   • 36-byte packet every 8 ms
+                                            │  UART 57600
+                                            ▼
+                                   ESP32  ── UDP broadcast, port 12345 (Wi-Fi)
+                                            │
+                                            ▼
+                     Laptop: display.py (PyQt6)                webserver.py (Flask + ngrok)
+                     • PTT, PWV, heart rate, HRV       ──►     • browser dashboard on LAN
+                     • ECG morphology (QRS, PR, QTc)   JSON    or the internet
+                     • XGBoost BP estimate
+```
 
-The device solves the discomfort and bulkiness of conventional inflatable-cuff BP monitors and traditional ECG/Bio-Z instruments, offering a convenient solution for continuous or frequent cardiac health monitoring for cases where such devices might be inaccesible or unaffordable. This repository contains the complete embedded firmware, host software, hardware documentation, milestone reports.
+| | |
+|---|---|
+| Acquisition | 2 × MAX30001 (ECG + bioimpedance), 128 Hz per channel |
+| Processing MCU | STM32F411CEU6 (Cortex-M4F, 100 MHz) |
+| Wireless | ESP32, UART → UDP over Wi-Fi |
+| Power | 2 × 18650 Li-ion with BMS, INA219 telemetry |
+| Hardware | Custom two-layer PCB (KiCad), 3D-printed enclosure with acrylic panels |
+| Host software | Python: PyQt6 + pyqtgraph GUI, Flask dashboard, XGBoost BP model |
 
-## Deliverables in This Repository
-This repository includes the following deliverables:
+## Repository Layout
 
-- STM32F411 Black Pill firmware for signal acquisition and on-board processing
-- ESP32 firmware for wireless UART-to-UDP bridging
-- Host-side Python software for desktop visualization and web dashboard delivery
-- A pre-trained XGBoost model used for blood-pressure estimation
-- Runtime state shared between the desktop app and the web server
-- Setup notes and implementation notes for each software component
-- Report PDFs documenting project progress (M0–M4)
-- Images showing the PCB, CAD model, soldering, printed enclosure, simulation output, and final assembled device
+| Path | Contents |
+|---|---|
+| [`src/stm32_blackpill/`](src/stm32_blackpill) | Acquisition and on-board DSP firmware (Arduino / STM32duino) |
+| [`src/esp32_bridge/`](src/esp32_bridge) | UART-to-UDP Wi-Fi bridge firmware |
+| [`src/host_app/`](src/host_app) | Desktop GUI (`display.py`), web dashboard (`webserver.py`), trained BP model |
+| [`pcb/`](pcb) | KiCad project for the device PCB, footprints, layer prints, BMS build photos |
+| [`3d_models/`](3d_models) | Enclosure STL and laser-cut acrylic panel DXFs |
+| [`others/`](others) | [User manual](others/USER_MANUAL.md), build photos, MATLAB simulations, BMS docs, write-ups |
+| [`reports/`](reports) | Milestone reports M0–M4 |
+| [`bom.xls`](bom.xls) | Bill of materials |
 
-## Repository Structure
-### Root directory
-- `README.md` — Main project overview and documentation entry point.
-- `src/` — Source code and implementation files for the embedded and host software.
-- `reports/` — PDF report submissions for the project.
-- `others/` — Supporting media and supplementary documentation.
+Every folder has its own README with details. Each firmware/software folder also has a `SETUP.md` with flashing or run instructions.
 
-### `src/`
-This folder contains the core implementation of the system.
+## Quick Start
 
-#### `src/Display & Webserver/`
-Host-side Python software running on a PC or laptop.
+1. **STM32** — flash `src/stm32_blackpill/stm32_blackpill.ino` with the STM32duino core ([setup](src/stm32_blackpill/SETUP.md)).
+2. **ESP32** — put your Wi-Fi SSID and password in `src/esp32_bridge/esp32_bridge.ino`, then flash it ([setup](src/esp32_bridge/SETUP.md)).
+3. **Laptop** — join the same network, then run:
+   ```sh
+   cd src/host_app
+   pip install -r requirements.txt
+   python display.py      # live GUI + signal processing
+   python webserver.py    # in a second terminal: browser dashboard on port 5000
+   ```
+   See [`src/host_app/SETUP.md`](src/host_app/SETUP.md) for virtual-environment and ngrok setup, and the [user manual](others/USER_MANUAL.md) for electrode placement.
 
-- `display.py` — PyQt6 desktop application, UDP receiver, packet parser, signal-processing engine, live plots, and vitals writer.
-- `webserver.py` — Flask web server that reads the vitals state file and serves the browser dashboard.
-- `bp_xgboost_model.pkl` — Pre-trained XGBoost model for cuffless blood pressure estimation.
-- `vitals_state.json` — Shared JSON state updated by the desktop app and read by the web server.
-- `README.md` — Component overview and architecture notes for the host-side software.
-- `SETUP.md` — Setup and run instructions for the host-side software.
+## Build Photos
 
-#### `src/ESP 32/`
-ESP32 firmware used as the wireless communication bridge.
+| PCB | Assembled device | Enclosure |
+|---|---|---|
+| <img src="others/images/PCB_3d_view.jpg" width="260"> | <img src="others/images/device_full_view_front.jpeg" width="260"> | <img src="others/images/3d_printed_case.jpg" width="260"> |
 
-- `Firmware.ino` — Arduino sketch for receiving UART data from the STM32 and forwarding it over UDP.
-- `README.md` — Overview of the ESP32 role, hardware connections, and design decisions.
-- `SETUP.md` — Flashing and setup instructions for the ESP32 module.
+## Team
 
-#### `src/STM32F411 Black Pill/`
-Main embedded firmware for the biomedical acquisition device.
+IM-PULSE (group MON-04): Yashvardhan Khandegar, Sudhindra Sahoo, Jahnvi Sharma, Vinay Hariharan, Krunal Vaghela.
 
-- `Firmware.ino` — Arduino-based STM32 firmware for acquisition, processing, packet creation, and serial transmission.
-- `README.md` — Overview of the STM32 role, hardware connections, and processing flow.
-- `SETUP.md` — Flashing and setup instructions for the Black Pill board.
-
-### `reports/`
-This folder contains the submitted report files for the project.
-
-- `MON-04-M0.pdf`
-- `MON-04-M1.pdf`
-- `MON-04-M2.pdf`
-- `MON-04-M3.pdf`
-- `MON-04-M4.pdf`
-
-### `others/`
-This folder contains supporting material that documents the physical build and testing process.
-
-#### `others/images/`
-Images of the PCB, CAD model, soldering process, enclosure, and final assembled device.
-This folder contains PCB images, CAD images, soldering images, the printed box, and the final assembled device.
-
-#### `others/simulation/`
-Simulation-related image evidence.
-
-
-## Notes
-- The repository currently uses a mixed hardware/software structure, so the source tree is divided by platform.
-- Folder names with spaces have been preserved exactly as they appear in the repository.
-
+---
 
 # Reflections, Challenges & Future Work
-
-## 11. Learning, Experiences & Key Takeaways
 
 ### Project Status Summary
 
@@ -159,7 +146,7 @@ Simulation-related image evidence.
 
 ---
 
-## 12. Incomplete Features & Future Work
+## Incomplete Features & Future Work
 
 ### Features Not Completed Within the Course Timeline
 

@@ -1,0 +1,11 @@
+# Host software for IM-PULSE (display.py + webserver.py)
+PyQt6
+pyqtgraph
+numpy
+scipy
+pandas
+joblib
+xgboost
+scikit-learn   # needed to unpickle bp_xgboost_model.pkl
+flask
+pyngrok        # only for the public ngrok URL

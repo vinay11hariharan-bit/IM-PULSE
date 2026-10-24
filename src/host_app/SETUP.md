@@ -20,7 +20,7 @@ pip --version
 ## Step 1 — Install Required Python Packages
 
 ```bash
-pip install flask pyqtgraph PyQt6 pyserial pyngrok numpy scipy scikit-learn xgboost joblib pandas
+pip install -r requirements.txt
 ```
 
 ### Package reference

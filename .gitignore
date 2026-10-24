@@ -1,0 +1,15 @@
+# KiCad per-user and backup files
+*.kicad_prl
+*-backups/
+fp-info-cache
+~*.lck
+*.bak
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
